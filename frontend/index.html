@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — CleanSight</title>
+  <link rel="icon" href="assets/logo/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body data-root="" data-page="dashboard">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="navbar"></div>
+  <main class="main" id="main">
+    <div class="container">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <h1 class="hero__title" id="hero-title">Keeping Public Spaces Cleaner</h1>
+          <p class="hero__text">Upload a photo of a campus path, garden or cafeteria. CleanSight finds the litter in it and counts it by type, so cleanup teams know where to look.</p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="pages/scan.html"><svg class="icon" aria-hidden="true"><use href="assets/icons/sprite.svg#scan"></use></svg>Scan New Image</a>
+            <a class="btn btn--secondary" href="pages/analytics.html">View Analytics</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats dash-stats" aria-label="Summary">
+        <div class="stat"><p class="stat__label">Total Scans</p><p class="stat__value" id="stat-scans">0</p></div>
+        <div class="stat"><p class="stat__label">Total Waste Detected</p><p class="stat__value" id="stat-waste">0</p></div>
+        <div class="stat"><p class="stat__label">Most Detected Waste Category</p><p class="stat__value" id="stat-top">—</p></div>
+      </section>
+
+      <div class="dash-grid">
+        <section class="card" aria-labelledby="latest-title">
+          <div class="card__head"><h2 class="section-title" id="latest-title">Latest Detection</h2></div>
+          <div id="latest-empty" class="empty-state">
+            <p>No scans yet. Your most recent detection will appear here.</p>
+            <p style="margin-top:var(--s-4)"><a class="btn btn--primary" href="pages/scan.html">Scan New Image</a></p>
+          </div>
+          <div id="latest-filled" hidden>
+            <img class="latest__img" id="latest-img" alt="Annotated image from the latest scan">
+            <div class="latest__meta">
+              <p id="latest-summary" class="text-muted"></p>
+              <a class="btn btn--secondary" id="latest-details" href="pages/scan.html">View Details</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="breakdown-title">
+          <div class="card__head"><h2 class="section-title" id="breakdown-title">Waste Breakdown</h2></div>
+          <div id="breakdown-empty" class="empty-state"><p>Category counts appear after your first scan.</p></div>
+          <div id="breakdown-filled" class="breakdown" hidden>
+            <div class="chart-box"><canvas id="breakdown-chart" role="img" aria-label="Donut chart of detected waste by category"></canvas></div>
+            <ul class="legend" id="breakdown-legend"></ul>
+          </div>
+        </section>
+      </div>
+
+      <section class="band" aria-label="KIIT University campus">
+        <p class="band__text">Built around KIIT University’s walkways, gardens and open spaces.</p>
+      </section>
+    </div>
+  </main>
+  <script src="js/vendor/chart.umd.js"></script>
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
