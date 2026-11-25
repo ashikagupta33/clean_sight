@@ -1,0 +1,6 @@
+.analytics-head{margin-bottom:var(--s-8)}
+.analytics-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:var(--s-6);margin-top:var(--s-6);align-items:start}
+.distribution{display:grid;gap:var(--s-6)}
+.legend--table .legend__value{display:flex;gap:var(--s-4)}
+@media (max-width:1024px){.analytics-grid{grid-template-columns:minmax(0,1fr)}}
+.analytics-grid .card{min-height:clamp(340px,48vh,560px)}

@@ -1,0 +1,39 @@
+/* CleanSight design tokens — Palette A: Forest & Ivory */
+@font-face{font-family:"DM Sans";font-weight:400;font-style:normal;font-display:swap;src:url("../assets/fonts/dm-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"DM Sans";font-weight:500;font-style:normal;font-display:swap;src:url("../assets/fonts/dm-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"DM Sans";font-weight:600;font-style:normal;font-display:swap;src:url("../assets/fonts/dm-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Playfair Display";font-weight:500;font-style:normal;font-display:swap;src:url("../assets/fonts/playfair-display-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Playfair Display";font-weight:600;font-style:normal;font-display:swap;src:url("../assets/fonts/playfair-display-latin-600-normal.woff2") format("woff2")}
+
+:root{
+  /* colour */
+  --forest-900:#16301F; --forest-700:#1F3D2B; --forest-600:#2C5239;
+  --olive-500:#6F8F5E;  --sage-300:#A9BBA3;   --sage-100:#E4EADF;
+  --ivory-50:#FBF9F4;   --ivory-100:#F6F2E9;  --ivory-200:#EDE8DB;
+  --charcoal-900:#232824; --charcoal-600:#5A625C;
+  --error:#B3362B; --warning:#B7791F;
+
+  /* semantic */
+  --bg:var(--ivory-100); --surface:var(--ivory-50); --border:var(--ivory-200);
+  --text:var(--charcoal-900); --text-muted:var(--charcoal-600);
+  --primary:var(--forest-700); --primary-hover:var(--forest-600); --on-primary:var(--ivory-50);
+  --focus:var(--olive-500);
+
+  /* chart categories */
+  --cat-plastic:#1F3D2B; --cat-paper:#6F8F5E; --cat-metal:#5A625C; --cat-other:#A9BBA3;
+
+  /* type */
+  --font-display:"Playfair Display",Georgia,serif;
+  --font-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fs-xs:.75rem; --fs-sm:.875rem; --fs-md:1rem; --fs-lg:1.25rem; --fs-xl:1.75rem;
+  --fs-hero:clamp(2.25rem,5vw,3.5rem);
+  --lh-body:1.6; --lh-heading:1.15;
+
+  /* space (8px scale) */
+  --s-1:.25rem; --s-2:.5rem; --s-3:.75rem; --s-4:1rem; --s-6:1.5rem; --s-8:2rem; --s-12:3rem; --s-16:4rem;
+
+  /* shape + motion */
+  --radius:12px; --radius-pill:999px;
+  --max-width:1680px; --nav-height:64px;
+  --ease:cubic-bezier(.2,.7,.2,1); --t-fast:150ms; --t-base:250ms;
+}

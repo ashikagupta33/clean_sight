@@ -1,0 +1,24 @@
+.hero{position:relative;overflow:hidden;border-radius:var(--radius);min-height:clamp(420px,58vh,680px);display:flex;align-items:center;background:var(--forest-900) url("../assets/images/hero-campus.jpg") center/cover no-repeat;color:var(--ivory-50)}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(22,48,31,.88) 0%,rgba(22,48,31,.6) 50%,rgba(22,48,31,.15) 100%)}
+.hero__content{position:relative;padding:var(--s-12);max-width:620px;display:grid;gap:var(--s-6);animation:hero-in 600ms var(--ease) both}
+.hero__title{font-family:var(--font-display);font-weight:500;font-size:var(--fs-hero)}
+.hero__text{font-size:var(--fs-lg);line-height:1.5;color:var(--ivory-100)}
+.hero__actions{display:flex;flex-wrap:wrap;gap:var(--s-3)}
+.hero .btn--primary{background:var(--ivory-50);color:var(--forest-900)}
+.hero .btn--primary:hover{background:var(--sage-100)}
+.hero .btn--secondary{color:var(--ivory-50);border-color:var(--ivory-50)}
+.hero .btn--secondary:hover{background:rgba(251,249,244,.15)}
+@keyframes hero-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.dash-stats{margin-top:var(--s-8)}
+.dash-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:var(--s-6);margin-top:var(--s-6);align-items:stretch}
+.latest__img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:var(--s-2);background:var(--ivory-200)}
+.latest__meta{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);margin-top:var(--s-4);flex-wrap:wrap}
+.breakdown{display:grid;gap:var(--s-6)}
+
+.band{position:relative;overflow:hidden;margin-top:var(--s-8);border-radius:var(--radius);min-height:clamp(240px,30vh,400px);display:flex;align-items:flex-end;background:var(--forest-900) url("../assets/images/dashboard-band.jpg") center/cover no-repeat;color:var(--ivory-50)}
+.band::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(22,48,31,.92) 0%,rgba(22,48,31,.55) 45%,rgba(22,48,31,.1) 100%)}
+.band__text{position:relative;padding:var(--s-8);max-width:560px;font-size:var(--fs-lg)}
+
+@media (max-width:1024px){.dash-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:480px){.hero{min-height:380px}.hero__content{padding:var(--s-6)}.hero__text{font-size:var(--fs-md)}}

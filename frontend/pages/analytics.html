@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics — CleanSight</title>
+  <link rel="icon" href="../assets/logo/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/analytics.css">
+</head>
+<body data-root="../" data-page="analytics">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="navbar"></div>
+  <main class="main" id="main">
+    <div class="container">
+      <header class="analytics-head">
+        <h1 class="page-title">Analytics</h1>
+      </header>
+
+      <section class="stats" aria-label="Summary">
+        <div class="stat"><p class="stat__label">Total Scans</p><p class="stat__value" id="stat-scans">0</p></div>
+        <div class="stat"><p class="stat__label">Total Waste Detected</p><p class="stat__value" id="stat-waste">0</p></div>
+      </section>
+
+      <div class="analytics-grid">
+        <section class="card" aria-labelledby="dist-title">
+          <div class="card__head"><h2 class="section-title" id="dist-title">Waste Category Distribution</h2></div>
+          <div id="dist-empty" class="empty-state"><p>No detections yet. Run a scan to see the category split.</p></div>
+          <div id="dist-filled" class="distribution" hidden>
+            <div class="chart-box"><canvas id="dist-chart" role="img" aria-label="Donut chart of waste by category"></canvas></div>
+            <ul class="legend legend--table" id="dist-legend"></ul>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="trend-title">
+          <div class="card__head"><h2 class="section-title" id="trend-title">Detection Trends</h2></div>
+          <div id="trend-empty" class="empty-state"><p>Trends appear after your first scan.</p></div>
+          <div id="trend-filled" hidden>
+            <div class="chart-box chart-box--wide"><canvas id="trend-chart" role="img" aria-label="Chart of waste detected per day"></canvas></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script src="../js/vendor/chart.umd.js"></script>
+  <script type="module" src="../js/app.js"></script>
+  <script type="module" src="../js/analytics.js"></script>
+</body>
+</html>

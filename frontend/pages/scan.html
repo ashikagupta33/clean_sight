@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scan &amp; Detect — CleanSight</title>
+  <link rel="icon" href="../assets/logo/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/scan.css">
+</head>
+<body data-root="../" data-page="scan">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="navbar"></div>
+  <main class="main" id="main">
+    <div class="container">
+      <header class="scan-head">
+        <h1 class="page-title">Scan &amp; Detect</h1>
+        <p class="text-muted">Upload a photo of a public space to find and count visible waste.</p>
+      </header>
+
+      <div id="scan-alert" role="alert" hidden></div>
+
+      <!-- State 1: upload -->
+      <section class="scan-layout" id="upload-section" aria-label="Upload image">
+        <div class="dropzone" id="dropzone">
+          <svg class="icon dropzone__icon" aria-hidden="true"><use href="../assets/icons/sprite.svg#cloud-upload"></use></svg>
+          <p class="dropzone__title">Drag and drop an image here</p>
+          <p class="dropzone__hint">JPG, PNG or WEBP, up to 10&nbsp;MB</p>
+          <button class="btn btn--primary" type="button" id="choose-btn">Choose File</button>
+          <input class="visually-hidden" type="file" id="file-input" accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-label="Choose an image file">
+        </div>
+        <div class="scan-aside" role="img" aria-label="KIIT University campus"></div>
+      </section>
+
+      <!-- State 2: preview -->
+      <section class="card preview" id="preview-section" aria-label="Image preview" hidden>
+        <img class="preview__img" id="preview-img" alt="Selected image preview">
+        <div class="preview__bar">
+          <div><p class="preview__name" id="preview-name"></p><p class="preview__size" id="preview-size"></p></div>
+          <div class="preview__actions">
+            <button class="btn btn--ghost" type="button" id="remove-btn"><svg class="icon icon--sm" aria-hidden="true"><use href="../assets/icons/sprite.svg#trash-2"></use></svg>Remove</button>
+            <button class="btn btn--secondary" type="button" id="replace-btn">Replace</button>
+            <button class="btn btn--primary" type="button" id="detect-btn"><span class="spinner" id="detect-spinner" hidden></span><span id="detect-label">Run Detection</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- State 3: results -->
+      <section class="results" id="results-section" aria-label="Detection results" hidden>
+        <div class="card">
+          <div class="annotated">
+            <img class="annotated__img" id="annotated-img" alt="Image with detected waste outlined">
+          </div>
+        </div>
+        <div class="card results__panel">
+          <div>
+            <p class="text-muted">Total items detected</p>
+            <p class="results__total" id="results-total">0</p>
+            <p class="results__time" id="results-time"></p>
+          </div>
+          <div>
+            <h2 class="section-title" style="margin-bottom:var(--s-3)">By category</h2>
+            <ul class="legend" id="results-categories"></ul>
+          </div>
+          <div>
+            <h2 class="section-title" style="margin-bottom:var(--s-3)">Detections</h2>
+            <ul class="det-list" id="results-detections"></ul>
+          </div>
+          <div class="results__actions">
+            <button class="btn btn--primary" type="button" id="report-btn"><svg class="icon" aria-hidden="true"><use href="../assets/icons/sprite.svg#download"></use></svg>Download Report (PDF)</button>
+            <button class="btn btn--secondary" type="button" id="again-btn">Scan Another</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="../js/vendor/jspdf.umd.min.js"></script>
+  <script type="module" src="../js/app.js"></script>
+  <script type="module" src="../js/scan.js"></script>
+</body>
+</html>
