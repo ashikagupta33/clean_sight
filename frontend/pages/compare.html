@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Before vs After Cleanup | CleanSight</title>
+
+    <link rel="stylesheet" href="../css/compare.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>CleanSight</h1>
+        <p>Before vs After Cleanup Comparison</p>
+    </header>
+
+    <main class="container">
+
+        <section class="intro">
+            <h2>Compare Cleanup Results</h2>
+            <p>
+                Upload before and after cleanup images
+                to compare the detected waste.
+            </p>
+        </section>
+
+        <section class="upload-section">
+
+            <div class="upload-card">
+                <h3>Before Cleanup</h3>
+                <input type="file" id="beforeImage" accept="image/*">
+                <img id="beforePreview" alt="Before cleanup preview">
+            </div>
+
+            <div class="upload-card">
+                <h3>After Cleanup</h3>
+                <input type="file" id="afterImage" accept="image/*">
+                <img id="afterPreview" alt="After cleanup preview">
+            </div>
+
+        </section>
+
+        <button id="compareBtn">Compare Images</button>
+
+        
+<section id="results" class="results">
+
+    <h2>Comparison Results</h2>
+
+    <div class="summary-cards">
+
+        <div class="summary-card">
+            <h3>Before Cleanup</h3>
+            <p id="beforeCount">--</p>
+            <span>Total detected waste</span>
+        </div>
+
+        <div class="summary-card">
+            <h3>After Cleanup</h3>
+            <p id="afterCount">--</p>
+            <span>Total detected waste</span>
+        </div>
+
+        <div class="summary-card">
+            <h3>Waste Reduction</h3>
+            <p id="reduction">--</p>
+            <span>Reduction percentage</span>
+        </div>
+
+    </div>
+
+    <h3 class="category-heading">Category-wise Comparison</h3>
+
+    <div class="category-table">
+
+        <div class="table-header">
+            <span>Category</span>
+            <span>Before</span>
+            <span>After</span>
+        </div>
+
+        <div class="table-row">
+            <span>Bottle</span>
+            <span id="beforeBottle">--</span>
+            <span id="afterBottle">--</span>
+        </div>
+
+        <div class="table-row">
+            <span>Can</span>
+            <span id="beforeCan">--</span>
+            <span id="afterCan">--</span>
+        </div>
+
+        <div class="table-row">
+            <span>Paper/Cardboard</span>
+            <span id="beforePaper">--</span>
+            <span id="afterPaper">--</span>
+        </div>
+
+        <div class="table-row">
+            <span>Plastic Wrapper</span>
+            <span id="beforePlastic">--</span>
+            <span id="afterPlastic">--</span>
+        </div>
+
+    </div>
+
+    <p id="comparisonMessage">
+        Upload both images to see comparison results.
+    </p>
+
+</section>
+
+
+    </main>
+
+    <script src="../js/compare.js"></script>
+
+</body>
+</html>
