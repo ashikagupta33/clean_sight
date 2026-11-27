@@ -1,297 +1,313 @@
-# CleanSight: Frontend
+# CleanSight
 
-CleanSight is an AI-powered waste detection platform (KIIT University project). A user uploads a photo of a public space. The backend runs a YOLO model, and this frontend shows the detected waste, category counts, an annotated image and a downloadable PDF report.
+**AI-powered waste detection for public spaces.** A KIIT University project.
 
-**This folder is the frontend only.** The ML model and FastAPI backend are separate.
+Upload a photo of a campus path, a park or a street. CleanSight finds the visible litter, draws a box around each item, counts it by type and keeps a history, so cleanup teams know where to go and can show the effect of a cleanup drive.
 
-<!-- Add screenshots here: Dashboard, Scan & Detect results, Analytics -->
+<!-- Add screenshots here: Dashboard, Scan & Detect results, Compare Cleanup -->
 
 ---
 
-## 1. What the website does
+## Contents
 
-| Page | What it shows |
+1. [What it does](#1-what-it-does)
+2. [How it works](#2-how-it-works)
+3. [Project structure](#3-project-structure)
+4. [Quick start](#4-quick-start)
+5. [Configuration](#5-configuration)
+6. [API reference](#6-api-reference)
+7. [The model](#7-the-model)
+8. [Data and privacy](#8-data-and-privacy)
+9. [Troubleshooting](#9-troubleshooting)
+10. [Decisions](#10-decisions)
+11. [Contributing](#11-contributing)
+12. [Known limitations and next steps](#12-known-limitations-and-next-steps)
+
+---
+
+## 1. What it does
+
+| Page | What you can do |
 |---|---|
-| **Dashboard** (`index.html`) | Total scans, total waste detected, most detected category, latest detection, category chart |
-| **Scan & Detect** (`pages/scan.html`) | Upload image, run detection, annotated result, counts, **Download Report (PDF)**, Scan Another |
-| **Analytics** (`pages/analytics.html`) | Category distribution (donut chart) and daily detection trend (bar chart) |
+| **Dashboard** | See total scans, total waste found, the most common category, the latest detection and a category breakdown |
+| **Scan & Detect** | Upload one image, run detection, see the annotated image, counts by category and every detection with its confidence, and download a PDF report |
+| **Analytics** | See the category distribution and the amount of waste detected per day |
+| **Compare Cleanup** | Upload a before and an after photo of the same place and see the change per category |
 
-Errors handled: wrong file type, empty file, file too large, backend unreachable, timeout, invalid response, and no waste found.
-
-Tech: plain HTML, CSS and JavaScript. No framework, no build step. Chart.js and jsPDF are included in `js/vendor/`; fonts and icons are included too, so it works offline.
-
----
-
-## 2. Project structure
-
-```
-cleansight-frontend/
-├── index.html                  Dashboard page
-├── README.md
-├── pages/
-│   ├── scan.html               Scan & Detect page
-│   └── analytics.html          Analytics page
-├── css/
-│   ├── variables.css           Colours, fonts, spacing (design tokens)
-│   ├── global.css              Buttons, cards, alerts, shared styles
-│   ├── navbar.css
-│   ├── dashboard.css
-│   ├── scan.css
-│   └── analytics.css
-├── js/
-│   ├── config.js               ★ Backend URL, limits, categories
-│   ├── api.js                  ★ ALL backend calls + RESPONSE_MAP
-│   ├── scan.js                 Upload, validation, detection flow, results
-│   ├── dashboard.js            Dashboard data and chart
-│   ├── analytics.js            Analytics data and charts
-│   ├── reports.js              PDF report generation
-│   ├── store.js                Scan history (saved in the browser)
-│   ├── charts.js               Chart helpers
-│   ├── imaging.js              Draws boxes and labels on images
-│   ├── navigation.js           Shared navigation bar
-│   ├── app.js                  Entry point loaded on every page
-│   ├── mock/mock-detect.js     Fake data for layout testing (off by default)
-│   └── vendor/                 chart.umd.js, jspdf.umd.min.js
-└── assets/
-    ├── images/                 hero-campus.jpg, dashboard-band.jpg, scan-side.jpg
-    ├── fonts/
-    ├── icons/sprite.svg
-    └── logo/logo.svg
-```
-
-★ = the only two files the backend/ML team ever needs to edit.
+Waste is detected in four model classes (`bottle`, `can`, `paper_cardboard`, `plastic_wrapper`) and shown in four categories: **Plastic, Paper, Metal, Other**.
 
 ---
 
-## 3. Run the frontend
+## 2. How it works
 
-The site must be served over HTTP. Double-clicking the HTML files will **not** work.
-
-**Option A: VS Code (easiest)**
-1. Open the `cleansight-frontend` folder in VS Code.
-2. Install the **Live Server** extension (by Ritwick Dey).
-3. Right-click `index.html` and choose **Open with Live Server**.
-
-**Option B: Terminal**
 ```
-cd cleansight-frontend
-python3 -m http.server 5500        # Windows: python -m http.server 5500
+ Browser (frontend/, plain HTML + CSS + JS)
+    │
+    │  POST /detect   (multipart form, field "file")
+    │  GET  /history  GET /health
+    ▼
+ FastAPI backend (backend/app/main.py)
+    │
+    ├─ service.py   validate upload → decode image → run detector → build response
+    ├─ detector.py  YOLOv8s on ONNX Runtime (CPU): letterbox → model → decode → NMS → boxes in original pixels
+    └─ history.py   save the scan's numbers to SQLite (backend/data/cleansight.db)
 ```
-Open http://localhost:5500
 
-Without a backend the site still opens. You will see a yellow warning on the Scan page ("detection service isn't reachable"). That is expected.
+1. The user picks an image on the Scan or Compare page. The frontend checks the type and size first.
+2. `frontend/js/api.js` (the only file that talks to the backend) sends it to `POST /detect`.
+3. The backend runs the model, saves the counts to the history and returns the detections as JSON.
+4. The frontend groups the model labels into categories, draws the boxes on the image, and shows the counts. The PDF report is built in the browser.
+5. Dashboard and Analytics read `GET /history`, so every device sees the same numbers.
 
 ---
 
-## 4. How the frontend connects to the backend
+## 3. Project structure
 
 ```
- Browser (Scan page)
-      │  1. user picks an image
-      ▼
-   scan.js ──▶ api.js ── POST  {API_BASE_URL}/detect   (multipart form, field "file")
-                                   │
-                                   ▼
-                          FastAPI + YOLO (backend)
-                                   │  2. returns JSON
-                                   ▼
-   api.js  normalises the JSON using RESPONSE_MAP
-      │  3. result = { detections, counts, total, annotated image }
-      ▼
-   scan.js  draws the result, saves the scan to history
-   reports.js  builds the PDF from the same result
+clean_sight/
+├── README.md                    This file
+├── decisions/                   Why things are built the way they are (start with decisions/README.md)
+│
+├── backend/                     Python FastAPI service
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── main.py              FastAPI app, routes, CORS, model loading
+│   │   ├── service.py           Upload validation, detection flow, response format
+│   │   ├── detector.py          YOLOv8 ONNX inference (pre- and post-processing)
+│   │   ├── history.py           SQLite scan history
+│   │   └── config.py            Settings (all overridable with environment variables)
+│   ├── models/
+│   │   └── best.onnx            Trained model (YOLOv8s, 4 classes)
+│   └── data/                    SQLite database is created here at runtime (not committed)
+│
+├── frontend/                    Static website, no build step
+│   ├── index.html               Dashboard
+│   ├── pages/                   scan.html, analytics.html, compare.html
+│   ├── css/                     variables.css (design tokens), global.css, one file per page
+│   ├── js/
+│   │   ├── config.js            Backend URL, upload limits, category rules
+│   │   ├── api.js               All backend calls + RESPONSE_MAP
+│   │   ├── store.js             Loads history from the backend, keeps the latest scan locally
+│   │   ├── upload.js            Upload checks and error messages (Scan + Compare)
+│   │   ├── scan.js, compare.js, dashboard.js, analytics.js   One script per page
+│   │   ├── imaging.js, charts.js, reports.js, navigation.js   Shared helpers
+│   │   └── vendor/              Chart.js, jsPDF
+│   └── assets/                  Images, fonts, icons, logo
+│
+└── ML/                          Model training
+    ├── MLPro2.ipynb             Training notebook (TACO dataset → 4 classes, YOLOv8s)
+    └── inference.py             Original Ultralytics inference script
 ```
 
-Key idea: **only `api.js` talks to the backend.** The rest of the UI works with one fixed internal format, so if the backend's JSON differs from what the frontend expects, you change `RESPONSE_MAP` and nothing else.
+---
 
-### Endpoints used
+## 4. Quick start
+
+You need **Python 3.10 or newer**. Run the backend and the frontend in two terminals.
+
+### Terminal 1: backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Check it at http://localhost:8000/health. You should see `"status": "ok"` and the four class names. Interactive API docs are at http://localhost:8000/docs.
+
+### Terminal 2: frontend
+
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+Open http://localhost:5500.
+
+The site must be served over HTTP. Opening the HTML files directly by double-clicking does not work. In VS Code you can instead right-click `frontend/index.html` and choose **Open with Live Server** (it also uses port 5500).
+
+### Try it
+
+1. Go to **Scan & Detect**, upload a photo with some litter and click **Run Detection**.
+2. Download the PDF report.
+3. Open **Dashboard** and **Analytics**: the scan is now counted.
+4. Go to **Compare Cleanup** and upload a before and an after photo.
+
+---
+
+## 5. Configuration
+
+### Backend (environment variables)
+
+All settings have sensible defaults. Override them only if you need to.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CLEANSIGHT_MODEL_PATH` | `backend/models/best.onnx` | Path to the ONNX model |
+| `CLEANSIGHT_CONF` | `0.25` | Minimum confidence for a detection |
+| `CLEANSIGHT_IOU` | `0.7` | IoU threshold for non-maximum suppression |
+| `CLEANSIGHT_DB_PATH` | `backend/data/cleansight.db` | SQLite history file |
+| `CLEANSIGHT_MAX_UPLOAD_MB` | `10` | Largest accepted image |
+| `CLEANSIGHT_CORS_ORIGINS` | `http://localhost:5500,http://127.0.0.1:5500` | Comma-separated list of frontend addresses allowed to call the API |
+
+Example: serving the frontend on port 3000 instead:
+
+```bash
+CLEANSIGHT_CORS_ORIGINS="http://localhost:3000" uvicorn app.main:app --port 8000
+```
+
+### Frontend (`frontend/js/config.js`)
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `API_BASE_URL` | `http://localhost:8000` | Backend address, no trailing slash |
+| `REQUEST_TIMEOUT_MS` | `60000` | How long to wait for a detection |
+| `MAX_FILE_MB` | `10` | Keep equal to `CLEANSIGHT_MAX_UPLOAD_MB` |
+| `ALLOWED_TYPES` | JPG, PNG, WEBP | Keep equal to the backend's allowed types |
+| `USE_MOCK_API` | `false` | `true` generates fake results for layout testing only; they are labelled as demo and never saved |
+| `CATEGORY_RULES` | see file | How model labels map to Plastic / Paper / Metal / Other |
+
+`RESPONSE_MAP` at the top of `frontend/js/api.js` describes the response format. Its defaults already match this backend, so it only needs changing if the API changes.
+
+---
+
+## 6. API reference
+
+Base URL: `http://localhost:8000`. Full interactive docs: `/docs`.
 
 | Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/detect` | Send one image, receive detections |
-| `GET` | `/health` | Checked when the Scan page loads, to warn the user if the service is down |
+| `GET` | `/health` | Service and model status. Returns 503 if the model failed to load |
+| `POST` | `/detect` | Detect waste in one image |
+| `GET` | `/history?limit=500` | Recent scans, newest first (counts only) |
+| `GET` | `/history/{id}` | One scan with all its detections |
 
-No other endpoints are called.
+### `POST /detect`
 
----
+Send the image as `multipart/form-data` in the field **`file`**.
 
-## 5. Step-by-step: connect the backend
-
-### Step 1: Start the backend
-Run FastAPI, for example on `http://localhost:8000`.
-
-### Step 2: Allow the frontend in CORS (backend side)
-Without this, the browser blocks every request. Add this to the FastAPI app:
-
-```python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5500", "http://127.0.0.1:5500"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-Use the port your frontend actually runs on. If the frontend is hosted on `https`, the backend must be `https` too.
-
-### Step 3: Set the backend URL (frontend side)
-In `js/config.js`:
-```js
-API_BASE_URL: "http://localhost:8000",   // no trailing slash
-```
-
-### Step 4: Look at the real response
-Run this in a terminal with any test image:
-```
-curl -X POST -F "file=@test.jpg" http://localhost:8000/detect
-```
-If this fails with "field required", the upload field is not called `file`. Note the field name that works.
-
-### Step 5: Match `RESPONSE_MAP` to the real response
-Open the top of `js/api.js`. These are the settings:
-
-| Setting | Meaning | Default |
+| Query parameter | Default | Meaning |
 |---|---|---|
-| `uploadField` | Name of the form field that carries the image | `"file"` |
-| `detectionsKeys` | Name(s) of the array holding detections (first match is used) | `detections`, `predictions`, `results`, `objects` |
-| `labelKeys` | Name(s) of the class label | `label`, `class_name`, `class`, `name` |
-| `confidenceKeys` | Name(s) of the confidence. 0–1 and 0–100 both work | `confidence`, `score`, `conf` |
-| `boxKeys` | Name(s) of the box. An array of 4 numbers or `{x1,y1,x2,y2}` | `bbox`, `box`, `xyxy` |
-| `boxFormat` | How the 4 numbers are arranged | `"xyxy"` |
-| `boxUnits` | `"pixels"` or `"normalized"` (0–1) | `"pixels"` |
-| `annotatedKeys` | Name(s) of the annotated image (optional) | `annotated_image`, `annotated_image_url`, `image_url` |
+| `conf` | `0.25` | Confidence threshold for this request (0–1) |
+| `save` | `true` | `false` skips saving this scan to the history |
+| `annotate` | `false` | `true` also returns `annotated_image`, a JPEG data URL with boxes drawn |
 
-Box formats:
-
-| `boxFormat` | The 4 numbers mean |
-|---|---|
-| `"xyxy"` | `[left, top, right, bottom]` |
-| `"xywh"` | `[left, top, width, height]` |
-| `"cxcywh"` | `[centre x, centre y, width, height]` |
-
-The most common changes are `uploadField`, `boxFormat` and `boxUnits`. Many field names are already accepted automatically.
-
-**Example.** Backend returns:
-```json
-{ "predictions": [ { "class": "bottle", "score": 0.88, "box": [120, 80, 60, 140] } ] }
+```bash
+curl -X POST -F "file=@photo.jpg" http://localhost:8000/detect
 ```
-Boxes here are `[x, y, width, height]` in pixels, so set only:
-```js
-boxFormat: "xywh",
-```
-Everything else is matched already.
-
-**Important for the ML/backend team:** box pixels must be relative to the **original uploaded image**, not a resized copy (YOLO often resizes to 640). If boxes appear shifted or too small on the result, convert them back to the original size on the backend, or return `normalized` (0–1) values and set `boxUnits: "normalized"`.
-
-### Step 6: Map the model's class names to categories
-The dashboard groups waste into **Plastic, Paper, Metal and Other**. In `js/config.js`, adjust `CATEGORY_RULES` to your model's real class names:
-```js
-const CATEGORY_RULES = [
-  ["Plastic", /plastic|bottle|bag|cup|wrapper|straw/i],
-  ["Paper",   /paper|cardboard|carton|tissue|newspaper/i],
-  ["Metal",   /metal|\bcan\b|\btin\b|foil|alumin/i],
-];
-```
-Anything that does not match goes to **Other**. If a class name is exactly "Plastic", "Paper", "Metal" or "Other", it is used directly.
-
-### Step 7: Test it
-1. Open the Scan page. There should be no yellow warning.
-2. Upload an image with visible waste and click **Run Detection**.
-3. Check the checklist:
-
-- [ ] Boxes sit on the right objects
-- [ ] Labels and confidence look right
-- [ ] Category counts and total are correct
-- [ ] **Download Report (PDF)** opens correctly
-- [ ] Dashboard and Analytics now show the scan
-
----
-
-## 6. Expected response (assumed, NOT yet confirmed)
-
-Until the backend team confirms the real format, the frontend assumes:
 
 ```json
 {
+  "id": "2750a04658f449528bc298ba6ad5ad09",
+  "timestamp": "2026-11-27T08:05:33Z",
+  "file_name": "photo.jpg",
+  "image": { "width": 3264, "height": 2448 },
+  "total": 2,
+  "counts": { "bottle": 1, "can": 0, "paper_cardboard": 1, "plastic_wrapper": 0 },
   "detections": [
-    { "label": "plastic_bottle", "confidence": 0.91, "bbox": [120, 80, 260, 300] }
+    { "label": "bottle", "confidence": 0.912, "bbox": [2297, 1086, 2839, 1267] },
+    { "label": "paper_cardboard", "confidence": 0.608, "bbox": [1276, 1622, 1587, 1937] }
   ],
-  "annotated_image": "<URL, data URL or base64 JPEG>"
+  "saved": true
 }
 ```
 
-- `annotated_image` is optional. If it is missing, the frontend draws the boxes and labels on the uploaded image itself.
-- Counts and the total are calculated from the `detections` list.
-- Relative image URLs (starting with `/`) are loaded from `API_BASE_URL`.
+- `bbox` is `[x1, y1, x2, y2]` in pixels of the original image.
+- `confidence` is between 0 and 1.
+- `counts` always lists every class, including those with 0.
+
+### Errors
+
+Errors return `{"detail": "message"}`.
+
+| Status | When |
+|---|---|
+| 400 | The file is empty |
+| 413 | The file is larger than the upload limit |
+| 415 | Not a JPG, PNG or WEBP |
+| 422 | The file isn't a readable image, or the `file` field is missing |
+| 503 | The model isn't loaded (check the backend logs) |
 
 ---
 
-## 7. Troubleshooting
+## 7. The model
+
+| | |
+|---|---|
+| Architecture | YOLOv8s, fine-tuned from the pretrained COCO checkpoint |
+| Dataset | [TACO](https://github.com/pedropro/TACO) (Trash Annotations in Context), fine-grained classes merged into 4 |
+| Classes | `bottle`, `can`, `paper_cardboard`, `plastic_wrapper` |
+| Input size | 640 × 640 |
+| Training | 50 epochs, batch 16, early stopping patience 15 (see `ML/MLPro2.ipynb`) |
+| Served as | `backend/models/best.onnx`, run with ONNX Runtime on the CPU |
+
+How model classes are shown in the app:
+
+| Model class | Category |
+|---|---|
+| `bottle` | Plastic (the class also includes glass bottles) |
+| `plastic_wrapper` | Plastic |
+| `paper_cardboard` | Paper |
+| `can` | Metal |
+
+### Updating the model
+
+1. Retrain in `ML/MLPro2.ipynb`.
+2. Export with `model.export(format="onnx", imgsz=640)`.
+3. Replace `backend/models/best.onnx` and restart the backend. Class names are read from the file, so no code change is needed.
+4. If you add classes, add matching rules to `CATEGORY_RULES` in `frontend/js/config.js`; anything unmatched is shown as **Other**.
+
+The YOLOv8 model is under the AGPL-3.0 licence from Ultralytics. See [decision 002](decisions/002-onnx-runtime-inference.md).
+
+---
+
+## 8. Data and privacy
+
+- The backend stores **numbers only**: time, file name, image size, counts and boxes. Uploaded images are processed in memory and never saved on the server.
+- The browser keeps a copy of the **latest** scan, with its images, so "View Details" and the PDF report work on that device.
+- The history database (`backend/data/cleansight.db`) is ignored by git. Delete the file to reset the history.
+- Don't commit API keys, private photos or the database to the repository.
+
+---
+
+## 9. Troubleshooting
 
 | Problem | Cause and fix |
 |---|---|
-| Yellow warning "detection service isn't reachable" | Backend is not running, or `API_BASE_URL` is wrong. Check `/health` in the browser. |
-| Red error "Can't reach the detection service" | Same as above, or CORS is not enabled. Open F12 → Console; a CORS message confirms it. |
-| Error "response CleanSight couldn't read" | JSON field names differ. Check `RESPONSE_MAP` against the `curl` output from Step 4. |
-| HTTP 422 error | Wrong upload field name. Fix `uploadField`. |
-| Boxes in the wrong place or wrong size | Wrong `boxFormat`, `boxUnits`, or boxes are for a resized image (see Step 5). |
-| Everything counted as "Other" | Class names don't match `CATEGORY_RULES` (Step 6). |
-| Page looks unstyled or navbar missing | The files were opened directly. Use Live Server or the terminal command. |
-| Photo or style didn't update | Hard refresh with Ctrl + Shift + R. |
-| Dashboard shows 0 on another laptop | History is stored per browser (see below). |
+| Yellow warning "detection service isn't reachable" | The backend isn't running, or `API_BASE_URL` in `frontend/js/config.js` is wrong. Open http://localhost:8000/health. |
+| `/health` returns 503 | The model file is missing or broken. The response's `detail` field says why. Check `backend/models/best.onnx`. |
+| Red error "Can't reach the detection service" on upload | Usually CORS. The frontend's address (including the port) must be in `CLEANSIGHT_CORS_ORIGINS`. Press F12 and check the Console for a CORS message. |
+| Dashboard says history couldn't be loaded | Same as above: the backend isn't reachable from the browser. |
+| `ModuleNotFoundError` when starting the backend | Run `uvicorn` from inside `backend/`, with the virtual environment activated. |
+| Page looks unstyled or the navbar is missing | The HTML file was opened directly. Serve `frontend/` over HTTP (see Quick start). |
+| Old style or script after an update | Hard refresh with Ctrl + Shift + R. |
+| Boxes look shifted | The backend returns original-image pixels. If you changed the API, check `boxFormat` and `boxUnits` in `RESPONSE_MAP`. |
 
 ---
 
-## 8. Data and history
+## 10. Decisions
 
-There is no history endpoint, so the Dashboard and Analytics read scans saved in the browser's `localStorage` (`js/store.js`).
-
-- Only real detections are saved.
-- History is **per browser and per device**.
-- To use a backend history later, replace `store.js` and keep the same exported functions.
+The [`decisions/`](decisions/README.md) folder explains the important choices: why FastAPI, why ONNX Runtime instead of PyTorch, how categories are mapped, how history is stored, the API format, and what was left for later. Read the relevant record before changing that part, and add a new record when you make a decision of similar weight.
 
 ---
 
-## 9. Demo mode
+## 11. Contributing
 
-Set `USE_MOCK_API: true` in `js/config.js` to generate fake detections for layout testing. Results are clearly labelled as demo data, are **not** saved, and the PDF is marked as demo. Always set it back to `false` for real use.
-
----
-
-## 10. Campus photos
-
-Replace the files in `assets/images/` with real KIIT photos, **keeping the same names**:
-
-| File | Used for |
-|---|---|
-| `hero-campus.jpg` | Dashboard hero |
-| `dashboard-band.jpg` | Dashboard bottom banner |
-| `scan-side.jpg` | Scan page side image (desktop only) |
-
-Landscape JPG, at least 1600px wide, ideally under 500 KB.
+- Never rewrite shared history: no force-push to `main` and no rebasing of commits that are already pushed.
+- Work on a branch (`feature/<short-name>`), push it, and open a pull request into `main`.
+- Write code comments and documentation in English.
+- When the API format changes, update `RESPONSE_MAP` in `frontend/js/api.js`, section 6 of this README and [decision 005](decisions/005-detect-api-contract.md) in the same pull request.
 
 ---
 
-## 11. Design
+## 12. Known limitations and next steps
 
-- **Colours:** Forest & Ivory palette. Primary `#1F3D2B`, background `#F6F2E9`, text `#232824`. Red and amber are used only for errors and warnings.
-- **Fonts:** Playfair Display (headings), DM Sans (everything else).
-- **Icons:** Lucide, one stroke width.
-- All values are CSS variables in `css/variables.css`.
+- Accuracy depends on the model. It was trained on 4 classes from TACO and can mistake bright or flat objects for litter, especially in aerial or wide shots. Photos taken from 1–3 m away work best.
+- Image upload only. Video analysis (`/analyze-video`) isn't built yet.
+- No Docker image, automated tests, location tags or hotspot map yet.
+- SQLite suits a single server. Hosting on a service that wipes its disk on restart will lose the history.
+- Tested in headless Chromium. Not yet tested in Safari or Firefox, or on physical phones.
 
----
-
-## 12. Testing status
-
-Tested in headless Chromium with simulated `/detect` responses: upload validation, success, no detections, HTTP 413 and 500, non-JSON and wrong-shape responses, backend down, timeout, PDF download, charts, navigation, and layouts from 320px to 1440px.
-
-**Not yet tested:** against the real backend, in Safari or Firefox, or on physical phones.
-
-## 13. Known limitations
-
-- History is per browser, not stored on a server.
-- Detection accuracy depends on the ML model, not the frontend.
-- Video analysis (`/analyze-video`) is not part of this frontend.
-- The `/detect` response format is an assumption until the backend team confirms it.
-
+See [decision 009](decisions/009-deferred-work.md) for the planned next steps.
