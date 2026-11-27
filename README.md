@@ -294,4 +294,4 @@ Tested in headless Chromium with simulated `/detect` responses: upload validatio
 - Detection accuracy depends on the ML model, not the frontend.
 - Video analysis (`/analyze-video`) is not part of this frontend.
 - The `/detect` response format is an assumption until the backend team confirms it.
-# clean_sight
+
