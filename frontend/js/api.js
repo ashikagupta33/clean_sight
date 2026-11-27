@@ -1,9 +1,9 @@
 /**
  * All backend communication lives here. UI code never calls fetch().
  *
- * The API contract has NOT been confirmed. Everything assumed about the request and
- * response is in RESPONSE_MAP below. When the backend team confirms the real shape,
- * change RESPONSE_MAP only; scan.js and the rest of the UI keep working.
+ * The request and response format is set in RESPONSE_MAP below. The defaults match the
+ * CleanSight FastAPI backend in backend/ (see backend/app/service.py for the exact JSON).
+ * If the backend format ever changes, change RESPONSE_MAP only; the rest of the UI keeps working.
  */
 import { CONFIG, categoryFor, emptyCounts } from "./config.js";
 
@@ -62,7 +62,38 @@ export async function detectWaste(file, imageSize) {
   } catch {
     throw new ApiError("invalid_response", "Response was not valid JSON");
   }
-  return { ...normalizeDetectResponse(data, imageSize), isMock: false };
+  return {
+    ...normalizeDetectResponse(data, imageSize),
+    isMock: false,
+    scanId: typeof data.id === "string" ? data.id : null, // id of the record in the server history
+    timestamp: typeof data.timestamp === "string" ? data.timestamp : null, // server time, ISO 8601 UTC
+  };
+}
+
+/**
+ * GET /history. Resolves to an array of { id, timestamp, total, counts } where counts uses
+ * the model's own labels (e.g. "bottle"). Throws ApiError if the backend can't be reached.
+ */
+export async function fetchHistory(limit = 500) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  let res;
+  try {
+    res = await fetch(url(`/history?limit=${limit}`), { signal: controller.signal });
+  } catch (err) {
+    throw err.name === "AbortError" ? new ApiError("timeout", "Request timed out") : new ApiError("network", "Backend unreachable");
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new ApiError("http", `HTTP ${res.status}`, res.status);
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new ApiError("invalid_response", "Response was not valid JSON");
+  }
+  if (!data || !Array.isArray(data.scans)) throw new ApiError("invalid_response", "History response has no scans array");
+  return data.scans;
 }
 
 /** GET /health. Resolves to true/false, never throws. */

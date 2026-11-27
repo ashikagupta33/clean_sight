@@ -1,9 +1,13 @@
-import { getHistory, summarize } from "./store.js";
+import { loadHistory, summarize } from "./store.js";
 import { renderDonut, renderTrend, renderLegend } from "./charts.js";
+import { showHistoryWarning } from "./navigation.js";
 
 const $ = (id) => document.getElementById(id);
-const stats = summarize(getHistory());
 
+const { history, error } = await loadHistory();
+if (error) showHistoryWarning($("history-alert"));
+
+const stats = summarize(history);
 $("stat-scans").textContent = stats.scans;
 $("stat-waste").textContent = stats.total;
 

@@ -22,7 +22,9 @@ export const CATEGORIES = [
 
 /**
  * Maps a model class label to a display category.
- * TO CONFIRM WITH ML TEAM: the real class names of the trained model.
+ * The trained model (backend/models/best.onnx) has four classes, mapped like this:
+ *   bottle -> Plastic, plastic_wrapper -> Plastic, paper_cardboard -> Paper, can -> Metal.
+ * The rules also accept other common names, so a retrained model with more classes still works.
  * A label equal to a category name (case-insensitive) always wins; anything unmatched is "Other".
  */
 const CATEGORY_RULES = [

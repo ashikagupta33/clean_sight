@@ -9,7 +9,6 @@
 .dropzone__icon{width:32px;height:32px;color:var(--primary)}
 .dropzone__title{font-size:var(--fs-lg);font-weight:600}
 .dropzone__hint{font-size:var(--fs-sm);color:var(--text-muted)}
-.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .preview{display:grid;gap:var(--s-4)}
 .preview__img{width:100%;max-height:480px;object-fit:contain;border-radius:var(--s-2);background:var(--ivory-200)}

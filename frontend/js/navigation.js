@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: "layout-dashboard", path: "index.html" },
   { id: "scan", label: "Scan & Detect", icon: "scan", path: "pages/scan.html" },
   { id: "analytics", label: "Analytics", icon: "chart-column", path: "pages/analytics.html" },
+  { id: "compare", label: "Compare", icon: "columns-2", path: "pages/compare.html" },
 ];
 
 export function icon(name, cls = "") {
@@ -43,4 +44,18 @@ export function renderNavbar() {
   toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
   document.addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
   window.matchMedia("(min-width:769px)").addEventListener("change", () => setOpen(false));
+}
+
+/** Shows the shared "history unavailable" warning inside the given container. */
+export function showHistoryWarning(box) {
+  if (!box) return;
+  const wrap = document.createElement("div");
+  wrap.className = "alert alert--warning";
+  wrap.insertAdjacentHTML("afterbegin", icon("circle-alert"));
+  const body = document.createElement("div");
+  body.className = "alert__body";
+  body.textContent = "Scan history couldn't be loaded because the backend isn't reachable. The numbers below will fill in once it is running.";
+  wrap.append(body);
+  box.replaceChildren(wrap);
+  box.hidden = false;
 }

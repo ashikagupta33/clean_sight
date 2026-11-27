@@ -1,13 +1,18 @@
 /**
- * Scan history kept in this browser's localStorage (per device).
- * Swap this module for a backend call if a history/stats endpoint is added later;
- * dashboard.js and analytics.js only use the functions exported here.
+ * Scan history.
+ *
+ * The history itself lives on the backend (SQLite, GET /history), so every browser and
+ * every device sees the same Dashboard and Analytics. The backend records a scan as part
+ * of POST /detect, so the frontend never has to send it separately.
+ *
+ * The browser still keeps the LATEST scan in localStorage, including its images, because
+ * the backend deliberately does not store images. That copy powers "View Details" and the
+ * Latest Detection card on this device.
  */
-import { emptyCounts, CATEGORIES } from "./config.js";
+import { emptyCounts, CATEGORIES, categoryFor } from "./config.js";
+import { fetchHistory } from "./api.js";
 
-const HISTORY_KEY = "cleansight.history.v1";
 const LATEST_KEY = "cleansight.latest.v1";
-const MAX_RECORDS = 500;
 
 const read = (key, fallback) => {
   try {
@@ -18,26 +23,49 @@ const read = (key, fallback) => {
   }
 };
 
-export const getHistory = () => read(HISTORY_KEY, []);
 export const getLatest = () => read(LATEST_KEY, null);
 
-/** Records a real scan. Returns false if the browser refused to store it. */
+/**
+ * Loads the scan history from the backend.
+ * Resolves to { history, error }. `history` is [] and `error` is set if the backend failed,
+ * so pages can show an empty state with a warning instead of breaking.
+ * Each record: { id, timestamp, total, counts } with counts grouped by display category.
+ */
+export async function loadHistory() {
+  try {
+    const scans = await fetchHistory();
+    return { history: scans.map(toCategoryRecord), error: null };
+  } catch (error) {
+    console.warn("CleanSight: could not load history from the backend", error);
+    return { history: [], error };
+  }
+}
+
+/** Server counts use model labels ("bottle", "can", ...); the UI groups them into categories. */
+function toCategoryRecord(scan) {
+  const counts = emptyCounts();
+  for (const [label, n] of Object.entries(scan.counts || {})) {
+    if (Number.isFinite(n)) counts[categoryFor(label)] += n;
+  }
+  return { id: scan.id, timestamp: scan.timestamp, total: scan.total, counts };
+}
+
+/**
+ * Keeps the latest real scan (with images) on this device. The backend already stored the
+ * numbers during POST /detect. Returns false if the browser refused to store it.
+ */
 export function addScan(scan) {
   try {
-    const history = getHistory();
-    history.push({ id: scan.id, timestamp: scan.timestamp, total: scan.total, counts: scan.counts });
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-MAX_RECORDS)));
-  } catch {
-    return false;
-  }
-  try {
     localStorage.setItem(LATEST_KEY, JSON.stringify(scan));
+    return true;
   } catch {
     try { // storage full: keep the numbers, drop the images
       localStorage.setItem(LATEST_KEY, JSON.stringify({ ...scan, originalImage: null, annotatedImage: null }));
-    } catch { /* ignore */ }
+      return true;
+    } catch {
+      return false;
+    }
   }
-  return true;
 }
 
 const dayKey = (ts) => {
@@ -45,7 +73,7 @@ const dayKey = (ts) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-export function summarize(history = getHistory()) {
+export function summarize(history) {
   const counts = emptyCounts();
   const days = new Map();
   let total = 0;

@@ -39,6 +39,9 @@ button,input{font:inherit;color:inherit}
 .alert--success{color:var(--forest-700);border-color:var(--sage-300);background:var(--sage-100)}
 .alert__body{color:var(--text)}
 
+.history-alert{margin-top:var(--s-6)}
+.analytics-head + .history-alert{margin:0 0 var(--s-6)}
+
 .empty-state{text-align:center;padding:var(--s-12) var(--s-6);color:var(--text-muted)}
 
 .main{padding-block:var(--s-8) var(--s-16);min-height:calc(100vh - var(--nav-height))}
@@ -46,6 +49,7 @@ button,input{font:inherit;color:inherit}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 [hidden]{display:none!important}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* Stat row (Dashboard + Analytics) */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}

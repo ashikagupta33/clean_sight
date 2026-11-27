@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Scan history database (created at runtime)
+backend/data/*.db
+backend/data/*.db-journal
+
+# PyTorch weights are shared separately; only best.onnx is committed
+*.pt
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
