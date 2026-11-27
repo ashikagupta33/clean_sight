@@ -1,122 +1,98 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Before vs After Cleanup | CleanSight</title>
-
-    <link rel="stylesheet" href="../css/compare.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compare Cleanup — CleanSight</title>
+  <link rel="icon" href="../assets/logo/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/dm-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="../css/compare.css">
 </head>
+<body data-root="../" data-page="compare">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="navbar"></div>
+  <main class="main" id="main">
+    <div class="container">
+      <header class="compare-head">
+        <h1 class="page-title">Compare Cleanup</h1>
+        <p class="text-muted">Upload a photo of the same place before and after a cleanup drive. CleanSight detects the waste in both and shows what changed.</p>
+      </header>
 
-<body>
+      <div id="compare-alert" role="alert" hidden></div>
 
-    <header class="header">
-        <h1>CleanSight</h1>
-        <p>Before vs After Cleanup Comparison</p>
-    </header>
-
-    <main class="container">
-
-        <section class="intro">
-            <h2>Compare Cleanup Results</h2>
-            <p>
-                Upload before and after cleanup images
-                to compare the detected waste.
-            </p>
-        </section>
-
-        <section class="upload-section">
-
-            <div class="upload-card">
-                <h3>Before Cleanup</h3>
-                <input type="file" id="beforeImage" accept="image/*">
-                <img id="beforePreview" alt="Before cleanup preview">
-            </div>
-
-            <div class="upload-card">
-                <h3>After Cleanup</h3>
-                <input type="file" id="afterImage" accept="image/*">
-                <img id="afterPreview" alt="After cleanup preview">
-            </div>
-
-        </section>
-
-        <button id="compareBtn">Compare Images</button>
-
-        
-<section id="results" class="results">
-
-    <h2>Comparison Results</h2>
-
-    <div class="summary-cards">
-
-        <div class="summary-card">
-            <h3>Before Cleanup</h3>
-            <p id="beforeCount">--</p>
-            <span>Total detected waste</span>
+      <section class="compare-grid" aria-label="Before and after images">
+        <!-- One slot per side. compare.js wires both from the data-side attribute. -->
+        <div class="card slot" data-side="before">
+          <div class="slot__head">
+            <h2 class="section-title">Before cleanup</h2>
+            <span class="slot__total num" hidden></span>
+          </div>
+          <div class="slot__drop dropzone-sm">
+            <svg class="icon slot__icon" aria-hidden="true"><use href="../assets/icons/sprite.svg#cloud-upload"></use></svg>
+            <p class="slot__hint">Drag an image here or</p>
+            <button class="btn btn--secondary" type="button" data-action="choose">Choose File</button>
+          </div>
+          <figure class="slot__figure" hidden>
+            <img class="slot__img" alt="Before cleanup image">
+            <figcaption class="slot__caption">
+              <span class="slot__name"></span>
+              <button class="btn btn--ghost" type="button" data-action="remove"><svg class="icon icon--sm" aria-hidden="true"><use href="../assets/icons/sprite.svg#trash-2"></use></svg>Remove</button>
+            </figcaption>
+          </figure>
+          <input class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-label="Choose the before cleanup image">
         </div>
 
-        <div class="summary-card">
-            <h3>After Cleanup</h3>
-            <p id="afterCount">--</p>
-            <span>Total detected waste</span>
+        <div class="card slot" data-side="after">
+          <div class="slot__head">
+            <h2 class="section-title">After cleanup</h2>
+            <span class="slot__total num" hidden></span>
+          </div>
+          <div class="slot__drop dropzone-sm">
+            <svg class="icon slot__icon" aria-hidden="true"><use href="../assets/icons/sprite.svg#cloud-upload"></use></svg>
+            <p class="slot__hint">Drag an image here or</p>
+            <button class="btn btn--secondary" type="button" data-action="choose">Choose File</button>
+          </div>
+          <figure class="slot__figure" hidden>
+            <img class="slot__img" alt="After cleanup image">
+            <figcaption class="slot__caption">
+              <span class="slot__name"></span>
+              <button class="btn btn--ghost" type="button" data-action="remove"><svg class="icon icon--sm" aria-hidden="true"><use href="../assets/icons/sprite.svg#trash-2"></use></svg>Remove</button>
+            </figcaption>
+          </figure>
+          <input class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-label="Choose the after cleanup image">
+        </div>
+      </section>
+
+      <div class="compare-actions">
+        <button class="btn btn--primary" type="button" id="compare-btn" disabled><span class="spinner" id="compare-spinner" hidden></span><span id="compare-label">Compare Images</span></button>
+        <button class="btn btn--ghost" type="button" id="reset-btn">Start Over</button>
+      </div>
+
+      <section class="compare-results" id="results" aria-labelledby="results-title" hidden>
+        <h2 class="section-title" id="results-title">Comparison Results</h2>
+
+        <div class="stats compare-stats">
+          <div class="stat"><p class="stat__label">Before cleanup</p><p class="stat__value" id="before-total">0</p></div>
+          <div class="stat"><p class="stat__label">After cleanup</p><p class="stat__value" id="after-total">0</p></div>
+          <div class="stat"><p class="stat__label" id="change-label">Waste reduction</p><p class="stat__value" id="change-value">—</p></div>
         </div>
 
-        <div class="summary-card">
-            <h3>Waste Reduction</h3>
-            <p id="reduction">--</p>
-            <span>Reduction percentage</span>
+        <div class="card">
+          <table class="compare-table">
+            <caption class="visually-hidden">Detected waste by category, before and after cleanup</caption>
+            <thead>
+              <tr><th scope="col">Category</th><th scope="col" class="num">Before</th><th scope="col" class="num">After</th><th scope="col" class="num">Change</th></tr>
+            </thead>
+            <tbody id="category-rows"></tbody>
+          </table>
+          <p class="compare-note text-muted" id="compare-note"></p>
         </div>
-
+      </section>
     </div>
-
-    <h3 class="category-heading">Category-wise Comparison</h3>
-
-    <div class="category-table">
-
-        <div class="table-header">
-            <span>Category</span>
-            <span>Before</span>
-            <span>After</span>
-        </div>
-
-        <div class="table-row">
-            <span>Bottle</span>
-            <span id="beforeBottle">--</span>
-            <span id="afterBottle">--</span>
-        </div>
-
-        <div class="table-row">
-            <span>Can</span>
-            <span id="beforeCan">--</span>
-            <span id="afterCan">--</span>
-        </div>
-
-        <div class="table-row">
-            <span>Paper/Cardboard</span>
-            <span id="beforePaper">--</span>
-            <span id="afterPaper">--</span>
-        </div>
-
-        <div class="table-row">
-            <span>Plastic Wrapper</span>
-            <span id="beforePlastic">--</span>
-            <span id="afterPlastic">--</span>
-        </div>
-
-    </div>
-
-    <p id="comparisonMessage">
-        Upload both images to see comparison results.
-    </p>
-
-</section>
-
-
-    </main>
-
-    <script src="../js/compare.js"></script>
-
+  </main>
+  <script type="module" src="../js/app.js"></script>
+  <script type="module" src="../js/compare.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
-import { CONFIG, CATEGORIES } from "./config.js";
-import { detectWaste, checkHealth, ApiError } from "./api.js";
+import { CATEGORIES } from "./config.js";
+import { detectWaste, checkHealth } from "./api.js";
+import { validateImageFile, detectionErrorMessage } from "./upload.js";
 import { loadImage, renderToDataUrl } from "./imaging.js";
 import { addScan, getLatest } from "./store.js";
 import { generateReport } from "./reports.js";
@@ -7,7 +8,6 @@ import { icon } from "./navigation.js";
 
 const $ = (id) => document.getElementById(id);
 const sections = { upload: $("upload-section"), preview: $("preview-section"), results: $("results-section") };
-const MAX_BYTES = CONFIG.MAX_FILE_MB * 1024 * 1024;
 const IMAGE_MAX_SIDE = 1000; // downscale stored/PDF images to keep localStorage and the PDF small
 
 let file = null, objectUrl = null, busy = false, currentScan = null;
@@ -36,18 +36,12 @@ function showAlert(type, message, retry) {
 }
 const clearAlert = () => { $("scan-alert").hidden = true; $("scan-alert").replaceChildren(); };
 
-function validate(f) {
-  if (f.size === 0) return "This file is empty. Choose a different image.";
-  if (!CONFIG.ALLOWED_TYPES.includes(f.type)) return "Unsupported file type. Use a JPG, PNG or WEBP image.";
-  if (f.size > MAX_BYTES) return `This image is ${(f.size / 1048576).toFixed(1)} MB. The limit is ${CONFIG.MAX_FILE_MB} MB.`;
-  return null;
-}
 
 function handleFiles(files) {
   if (!files || !files.length || busy) return;
   clearAlert();
   if (files.length > 1) return showAlert("error", "Choose one image at a time.");
-  const error = validate(files[0]);
+  const error = validateImageFile(files[0]);
   if (error) return showAlert("error", error);
 
   file = files[0];
@@ -70,16 +64,6 @@ function reset() {
   if (location.search) history.replaceState(null, "", location.pathname);
 }
 
-function errorMessage(err) {
-  if (!(err instanceof ApiError)) return "Something went wrong while preparing the image. Try again.";
-  if (err.code === "network") return "Can't reach the detection service. Check that the backend is running and that API_BASE_URL in js/config.js is correct.";
-  if (err.code === "timeout") return `Detection took longer than ${CONFIG.REQUEST_TIMEOUT_MS / 1000} seconds. Try again or use a smaller image.`;
-  if (err.code === "invalid_response") return "The detection service sent a response CleanSight couldn't read. Please tell the backend team.";
-  if (err.status === 413) return "The server rejected this image as too large.";
-  if (err.status === 415 || err.status === 422) return "The server couldn't accept this file. Try a different image.";
-  if (err.status >= 500) return "The detection service hit an error. Try again in a moment.";
-  return `The request failed (HTTP ${err.status}).`;
-}
 
 function setBusy(on) {
   busy = on;
@@ -105,8 +89,8 @@ async function runDetection() {
     annotatedImage = annotatedImage || renderToDataUrl(original, IMAGE_MAX_SIDE, result.detections);
 
     currentScan = {
-      id: `${Date.now()}`,
-      timestamp: new Date().toISOString(),
+      id: result.scanId || `${Date.now()}`,
+      timestamp: result.timestamp || new Date().toISOString(),
       fileName: file.name,
       total: result.total,
       counts: result.counts,
@@ -115,11 +99,11 @@ async function runDetection() {
       annotatedImage,
       isMock: result.isMock,
     };
-    if (!result.isMock && !addScan(currentScan)) console.warn("CleanSight: could not save this scan to localStorage");
+    if (!result.isMock && !addScan(currentScan)) console.warn("CleanSight: could not keep the latest scan in localStorage");
     renderResults(currentScan);
   } catch (err) {
     console.error(err);
-    showAlert("error", errorMessage(err), runDetection);
+    showAlert("error", detectionErrorMessage(err), runDetection);
   } finally {
     setBusy(false);
   }

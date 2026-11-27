@@ -1,39 +1,37 @@
 # CleanSight Frontend
 
-Vanilla HTML/CSS/JS. No build step, no framework. Chart.js and jsPDF are vendored in `js/vendor/`; fonts and icons are self-hosted, so it works offline.
+Vanilla HTML, CSS and JavaScript. No build step and no framework. Chart.js and jsPDF are included in `js/vendor/`, and fonts and icons are self-hosted, so the site works offline.
+
+For setup, configuration, the API and troubleshooting, see the [root README](../README.md).
 
 ## Run
-Serve the folder over HTTP (ES modules do not load from `file://`):
+Serve this folder over HTTP (ES modules do not load from `file://`):
 
-    cd cleansight-frontend
-    python3 -m http.server 5500
+    cd frontend
+    python -m http.server 5500
 
-Open http://localhost:5500. Use any port other than the backend's.
+Open http://localhost:5500. Start the backend too (see the root README), otherwise the pages show a "service isn't reachable" warning.
 
-## Connect the backend (for the backend / ML team)
-Edit only these two places:
+## Pages
+| File | Page |
+|---|---|
+| `index.html` | Dashboard |
+| `pages/scan.html` | Scan & Detect |
+| `pages/analytics.html` | Analytics |
+| `pages/compare.html` | Compare Cleanup |
 
-1. `js/config.js`: `API_BASE_URL`, timeout, max file size, allowed types, and `CATEGORY_RULES` (model class label -> Plastic / Paper / Metal / Other).
-2. `js/api.js`: the `RESPONSE_MAP` block at the top: upload field name, JSON field names, bounding-box format and units, and how the annotated image is returned.
-
-Requests used: `POST /detect` (multipart form, one image) and `GET /health`. No other endpoints are called.
-
-FastAPI must allow the frontend origin:
-
-    app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5500"], allow_methods=["*"], allow_headers=["*"])
-
-Assumed response (UNCONFIRMED; change `RESPONSE_MAP` if different):
-
-    { "detections": [ { "label": "plastic_bottle", "confidence": 0.91, "bbox": [x1, y1, x2, y2] } ],
-      "annotated_image": "<url | data URL | base64 JPEG>" }   // optional
-
-If `annotated_image` is missing, CleanSight draws boxes and labels on the uploaded image from `bbox`.
-
-## Data and history
-There is no history endpoint. Dashboard and Analytics read scans stored in this browser's `localStorage` (`js/store.js`), so numbers are per device. Only real detections are stored. To use a backend later, replace `store.js`.
+## Where things live
+- `js/config.js`: backend URL, timeout, upload limits, and `CATEGORY_RULES` (model label → Plastic / Paper / Metal / Other).
+- `js/api.js`: the only file that calls the backend (`/detect`, `/health`, `/history`). `RESPONSE_MAP` at the top describes the response format; its defaults match the backend in `../backend`.
+- `js/store.js`: loads the scan history from the backend and keeps the latest scan (with images) in `localStorage`.
+- `js/upload.js`: upload checks and error messages shared by the Scan and Compare pages.
+- `css/variables.css`: colours, fonts and spacing. Every other stylesheet uses these tokens.
 
 ## Demo mode
-`CONFIG.USE_MOCK_API = true` in `js/config.js` generates fake detections locally for layout testing. Results are labelled as demo data, are not saved, and the report says so. Keep it `false` otherwise.
+`USE_MOCK_API: true` in `js/config.js` generates fake detections locally for layout testing. Results are labelled as demo data, are never sent to or saved by the backend, and the PDF says so. Keep it `false` otherwise.
 
 ## Images
-Replace the placeholders in `assets/images/` with real KIIT photos using the same names: `hero-campus.jpg`, `dashboard-band.jpg`, `scan-side.jpg` (landscape, 1600px or wider).
+Replace the files in `assets/images/` with real KIIT photos, keeping the same names: `hero-campus.jpg`, `dashboard-band.jpg`, `scan-side.jpg` (landscape, 1600px wide or more, ideally under 500 KB).
+
+## Design
+Forest & Ivory palette (primary `#1F3D2B`, background `#F6F2E9`, text `#232824`; red and amber only for errors and warnings), Playfair Display for headings, DM Sans for everything else, and Lucide icons.
